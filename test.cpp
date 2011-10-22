@@ -223,6 +223,7 @@ BOOST_AUTO_TEST_CASE( stability ) {
 #if HAS_MOVE || __cplusplus > 199711L // C++11
 
 #include <memory> // for std::unique_ptr ( move-only class )
+#include <cstdlib> // for std::rand
 
 struct MoveOnly
 {
@@ -238,21 +239,32 @@ struct MoveOnly
     }
     
     friend bool operator<( MoveOnly const& x, MoveOnly const& y ) {
+        BOOST_REQUIRE( x.p != 0 );
+        BOOST_REQUIRE( y.p != 0 );
         return *x < *y;
     }
     
 };
 
 BOOST_AUTO_TEST_CASE( move_only ) {
-    MoveOnly a[] = { 7, 1, 5, 3, 9 };
+    const int size = 1024;
 
-    timsort(a, a + sizeof(a) / sizeof(a[0]), std::less<MoveOnly>());
+    for(int n = 0; n < 100; ++n) {
+        std::vector<MoveOnly> a, b;
+        a.reserve( size ); b.reserve( size );
+        for(int i = 0; i < size; ++i) {
+            int const x = std::rand() % size;
+            a.push_back( x );
+            b.push_back( x );
+        }
+        
+        timsort(a.begin(), a.end(), std::less<MoveOnly>());
+        std::stable_sort(b.begin(), b.end(), std::less<MoveOnly>());
 
-    BOOST_CHECK_EQUAL(*a[0], 1);
-    BOOST_CHECK_EQUAL(*a[1], 3);
-    BOOST_CHECK_EQUAL(*a[2], 5);
-    BOOST_CHECK_EQUAL(*a[3], 7);
-    BOOST_CHECK_EQUAL(*a[4], 9);
+        for(int i = 0; i < size; ++i) {
+            BOOST_CHECK_EQUAL( *a[i], *b[i] );
+        }
+    }
 }
 
 #endif// #if HAS_MOVE || __cplusplus > 199711L // C++11
