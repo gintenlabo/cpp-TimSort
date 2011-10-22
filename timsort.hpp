@@ -8,6 +8,11 @@
  * You can use and/or redistribute in the same term of the original license.
  */
 
+/*
+  WARNING : This code is EXPERIMENTAL and will be BUGGY.
+    DO NOT USE this code until tested well.
+*/
+
 #ifndef GFX_TIMSORT_HPP
 #define GFX_TIMSORT_HPP
 
