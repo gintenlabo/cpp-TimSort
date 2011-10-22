@@ -7,10 +7,25 @@
 
 #include <boost/timer.hpp>
 
+#define HAS_MOVE 1
 #include "timsort.hpp"
 
 enum state_t {
     sorted, randomized, reversed
+};
+
+#include <boost/lexical_cast.hpp>
+struct NumString
+{
+    std::string s;
+    
+    NumString( int i )
+        : s( boost::lexical_cast<std::string>(i) ) {}
+    
+    friend bool operator<( NumString const& x, NumString const& y ) {
+        return x.s < y.s;
+    }
+    
 };
 
 template <typename value_t>
@@ -87,6 +102,9 @@ static void doit(int const n, state_t const state) {
 
     std::cerr << "boost::rational" << std::endl;
     bench< boost::rational<long long> >(n, state);
+
+    std::cerr << "std::string" << std::endl;
+    bench<NumString>(n, state);
 }
 
 int main() {
