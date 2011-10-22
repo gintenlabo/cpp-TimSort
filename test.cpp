@@ -7,7 +7,7 @@
 #define BOOST_TEST_MODULE TimSortTest
 #include <boost/test/unit_test.hpp>
 
-// #define HAS_MOVE 1
+#define HAS_MOVE 1
 #include "timsort.hpp"
 
 BOOST_AUTO_TEST_CASE( simple10 ) {

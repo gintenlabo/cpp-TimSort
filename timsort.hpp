@@ -31,8 +31,10 @@
 
 #if HAS_MOVE || __cplusplus > 199711L // C++11
 #define MOVE(x) std::move(x)
+#define MOVE_COPY(f,l,d) std::move(f,l,d)
 #else
 #define MOVE(x) (x)
+#define MOVE_COPY(f,l,d) std::copy(f,l,d)
 #endif
 
 template <typename Value, typename LessFunction> class Compare {
@@ -419,20 +421,20 @@ class TimSort {
         assert( len1 > 0 && len2 > 0 && base1 + len1 == base2 );
 
         tmp_.clear(); tmp_.reserve(len1);
-        std::copy(base1, base1 + len1, std::back_inserter(tmp_));
+        MOVE_COPY(base1, base1 + len1, std::back_inserter(tmp_));
 
         tmp_iter_t cursor1 = tmp_.begin();
         iter_t cursor2     = base2;
         iter_t dest        = base1;
 
-        *(dest++) = *(cursor2++);
+        *(dest++) = MOVE(*(cursor2++));
         if(--len2 == 0) {
-            std::copy(cursor1, cursor1 + len1, dest);
+            MOVE_COPY(cursor1, cursor1 + len1, dest);
             return;
         }
         if(len1 == 1) {
-            std::copy(cursor2, cursor2 + len2, dest);
-            *(dest + len2) = *cursor1;
+            MOVE_COPY(cursor2, cursor2 + len2, dest);
+            *(dest + len2) = MOVE(*cursor1);
             return;
         }
 
@@ -449,7 +451,7 @@ class TimSort {
                 assert( len1 > 1 && len2 > 0 );
 
                 if(compare.lt(*cursor2, *cursor1)) {
-                    *(dest++) = *(cursor2++);
+                    *(dest++) = MOVE(*(cursor2++));
                     ++count2;
                     count1 = 0;
                     if(--len2 == 0) {
@@ -458,7 +460,7 @@ class TimSort {
                     }
                 }
                 else {
-                    *(dest++) = *(cursor1++);
+                    *(dest++) = MOVE(*(cursor1++));
                     ++count1;
                     count2 = 0;
                     if(--len1 == 1) {
@@ -476,7 +478,7 @@ class TimSort {
 
                 count1 = gallopRight(*cursor2, cursor1, len1, 0, compare);
                 if(count1 != 0) {
-                    std::copy(cursor1, cursor1 + count1, dest);
+                    MOVE_COPY(cursor1, cursor1 + count1, dest);
                     dest    += count1;
                     cursor1 += count1;
                     len1    -= count1;
@@ -486,7 +488,7 @@ class TimSort {
                         break;
                     }
                 }
-                *(dest++) = *(cursor2++);
+                *(dest++) = MOVE(*(cursor2++));
                 if(--len2 == 0) {
                     break_outer = true;
                     break;
@@ -494,7 +496,7 @@ class TimSort {
 
                 count2 = gallopLeft(*cursor1, cursor2, len2, 0, compare);
                 if(count2 != 0) {
-                    std::copy(cursor2, cursor2 + count2, dest);
+                    MOVE_COPY(cursor2, cursor2 + count2, dest);
                     dest    += count2;
                     cursor2 += count2;
                     len2    -= count2;
@@ -503,7 +505,7 @@ class TimSort {
                         break;
                     }
                 }
-                *(dest++) = *(cursor1++);
+                *(dest++) = MOVE(*(cursor1++));
                 if(--len1 == 1) {
                     break_outer = true;
                     break;
@@ -525,8 +527,8 @@ class TimSort {
 
         if(len1 == 1) {
             assert( len2 > 0 );
-            std::copy(cursor2, cursor2 + len2, dest);
-            *(dest + len2) = *cursor1;
+            MOVE_COPY(cursor2, cursor2 + len2, dest);
+            *(dest + len2) = MOVE(*cursor1);
         }
         else if(len1 == 0) {
             // throw IllegalArgumentException(
@@ -536,7 +538,7 @@ class TimSort {
         else {
             assert( len2 == 0 );
             assert( len1 > 1 );
-            std::copy(cursor1, cursor1 + len1, dest);
+            MOVE_COPY(cursor1, cursor1 + len1, dest);
         }
     }
 
@@ -545,22 +547,22 @@ class TimSort {
         assert( len1 > 0 && len2 > 0 && base1 + len1 == base2 );
 
         tmp_.clear(); tmp_.reserve(len2);
-        std::copy(base2, base2 + len2, std::back_inserter(tmp_));
+        MOVE_COPY(base2, base2 + len2, std::back_inserter(tmp_));
 
         iter_t cursor1     = base1 + (len1 - 1);
         tmp_iter_t cursor2 = tmp_.begin() + (len2 - 1);
         iter_t dest        = base2 + (len2 - 1);
 
-        *(dest--) = *(cursor1--);
+        *(dest--) = MOVE(*(cursor1--));
         if(--len1 == 0) {
-            std::copy(tmp_.begin(), tmp_.begin() + len2, dest - (len2 - 1));
+            MOVE_COPY(tmp_.begin(), tmp_.begin() + len2, dest - (len2 - 1));
             return;
         }
         if(len2 == 1) {
             dest    -= len1;
             cursor1 -= len1;
-            std::copy(cursor1 + 1, cursor1 + (1 + len1), dest + 1);
-            *dest = *cursor2;
+            MOVE_COPY(cursor1 + 1, cursor1 + (1 + len1), dest + 1);
+            *dest = MOVE(*cursor2);
             return;
         }
 
@@ -577,7 +579,7 @@ class TimSort {
                 assert( len1 > 0 && len2 > 1 );
 
                 if(compare.lt(*cursor2, *cursor1)) {
-                    *(dest--) = *(cursor1--);
+                    *(dest--) = MOVE(*(cursor1--));
                     ++count1;
                     count2 = 0;
                     if(--len1 == 0) {
@@ -586,7 +588,7 @@ class TimSort {
                     }
                 }
                 else {
-                    *(dest--) = *(cursor2--);
+                    *(dest--) = MOVE(*(cursor2--));
                     ++count2;
                     count1 = 0;
                     if(--len2 == 1) {
@@ -607,14 +609,14 @@ class TimSort {
                     dest    -= count1;
                     cursor1 -= count1;
                     len1    -= count1;
-                    std::copy(cursor1 + 1, cursor1 + (1 + count1), dest + 1);
+                    MOVE_COPY(cursor1 + 1, cursor1 + (1 + count1), dest + 1);
 
                     if(len1 == 0) {
                         break_outer = true;
                         break;
                     }
                 }
-                *(dest--) = *(cursor2--);
+                *(dest--) = MOVE(*(cursor2--));
                 if(--len2 == 1) {
                     break_outer = true;
                     break;
@@ -625,13 +627,13 @@ class TimSort {
                     dest    -= count2;
                     cursor2 -= count2;
                     len2    -= count2;
-                    std::copy(cursor2 + 1, cursor2 + (1 + count2), dest + 1);
+                    MOVE_COPY(cursor2 + 1, cursor2 + (1 + count2), dest + 1);
                     if(len2 <= 1) {
                         break_outer = true;
                         break;
                     }
                 }
-                *(dest--) = *(cursor1--);
+                *(dest--) = MOVE(*(cursor1--));
                 if(--len1 == 0) {
                     break_outer = true;
                     break;
@@ -655,8 +657,8 @@ class TimSort {
             assert( len1 > 0 );
             dest    -= len1;
             cursor1 -= len1;
-            std::copy(cursor1 + 1, cursor1 + (1 + len1), dest + 1);
-            *dest = *cursor2;
+            MOVE_COPY(cursor1 + 1, cursor1 + (1 + len1), dest + 1);
+            *dest = MOVE(*cursor2);
         }
         else if(len2 == 0) {
             // throw IllegalArgumentException(
@@ -666,7 +668,7 @@ class TimSort {
         else {
             assert( len1 == 0 );
             assert( len2 > 1 );
-            std::copy(tmp_.begin(), tmp_.begin() + len2, dest - (len2 - 1));
+            MOVE_COPY(tmp_.begin(), tmp_.begin() + len2, dest - (len2 - 1));
         }
     }
 
