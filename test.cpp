@@ -7,6 +7,7 @@
 #define BOOST_TEST_MODULE TimSortTest
 #include <boost/test/unit_test.hpp>
 
+// #define HAS_MOVE 1
 #include "timsort.hpp"
 
 BOOST_AUTO_TEST_CASE( simple10 ) {
@@ -218,3 +219,40 @@ BOOST_AUTO_TEST_CASE( stability ) {
     BOOST_CHECK_EQUAL(a[11].first,  3);
     BOOST_CHECK_EQUAL(a[11].second, baz);
 }
+
+#if HAS_MOVE || __cplusplus > 199711L // C++11
+
+#include <memory> // for std::unique_ptr ( move-only class )
+
+struct MoveOnly
+{
+    std::unique_ptr<int> p;
+    
+    MoveOnly( int i )
+        : p( new int(i) ) {}
+    
+    
+    int operator*() const {
+        BOOST_REQUIRE( p != 0 );
+        return *p;
+    }
+    
+    friend bool operator<( MoveOnly const& x, MoveOnly const& y ) {
+        return *x < *y;
+    }
+    
+};
+
+BOOST_AUTO_TEST_CASE( move_only ) {
+    MoveOnly a[] = { 7, 1, 5, 3, 9 };
+
+    timsort(a, a + sizeof(a) / sizeof(a[0]), std::less<MoveOnly>());
+
+    BOOST_CHECK_EQUAL(*a[0], 1);
+    BOOST_CHECK_EQUAL(*a[1], 3);
+    BOOST_CHECK_EQUAL(*a[2], 5);
+    BOOST_CHECK_EQUAL(*a[3], 7);
+    BOOST_CHECK_EQUAL(*a[4], 9);
+}
+
+#endif// #if HAS_MOVE || __cplusplus > 199711L // C++11
